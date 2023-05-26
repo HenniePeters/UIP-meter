@@ -6,6 +6,6 @@ __<h2>This repository is a work in progress</h2>__
 
 26-may-2023  
 <img src="https://github.com/HenniePeters/UIP-meter/blob/main/IMG_20230526_092125.jpg?raw=true"/>  
-Posting the first version of the source code. 
+Posting the first version of the source code. It does not measure yet, at the moment the code is just showing debugging information and the schematic will follow shortly...
 Next step, I will have to get rid of this distortion in the display:  
 https://youtu.be/QS9rJhHR2g8
