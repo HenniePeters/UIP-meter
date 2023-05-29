@@ -147,6 +147,8 @@ void loop() {
 
             Send_FrameBuffer_To_LCD();
         }
+        //Send_FrameBuffer_To_LCD(); // maximum visible distortion by rewriting
+        //_delay_ms(50);             // the whole display every 50ms 
     }
 }
 //===========================================================================

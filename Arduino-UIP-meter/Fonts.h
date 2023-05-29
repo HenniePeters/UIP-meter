@@ -3,6 +3,7 @@ extern void PrintLarge( uint8_t left, uint8_t top, const char * );
 extern void PrintSmall( uint8_t left, uint8_t top, const char * );
 extern uint8_t framebuffer[32][18];
 extern void write_command( uint8_t command );
+//extern void write_data( uint8_t data );
 extern void Init_LCD();
 extern void Fill_FrameBuffer( uint8_t fill_data );
 extern void Send_FrameBuffer_To_LCD( void );
@@ -450,48 +451,6 @@ const uint8_t SmallSpace[13] PROGMEM = { // ASCII dec:32 hex:20
     0b00000000,
     0b00000000,
     0b00000000
-};
-const uint8_t Small_A[13] PROGMEM = { // ASCII dec:32 hex:20
-    1, 10, // width in bytes, height in pixels
-
-    0b00000000,
-    0b00011000,
-    0b00011000,
-    0b00111100,
-    0b00111100,
-    0b01100110,
-    0b01100110,
-    0b11111111,
-    0b11000011,
-    0b11000011
-};
-const uint8_t Small_m[23] PROGMEM = { // ASCII dec:32 hex:20
-    2, 10, // width in bytes, height in pixels
-
-    0b00000000, 0b00000000,
-    0b00000000, 0b00000000,
-    0b00000000, 0b00000000,
-    0b00011011, 0b10011100,
-    0b00011100, 0b11100110,
-    0b00011000, 0b11000110,
-    0b00011000, 0b11000110,
-    0b00011000, 0b11000110,
-    0b00011000, 0b11000110,
-    0b00011000, 0b11000110
-};
-const uint8_t Small_V[23] PROGMEM = { // ASCII dec:32 hex:20
-    2, 10, // width in bytes, height in pixels
-
-    0b00000000, 0b00000000,
-    0b01100001, 0b10000000,
-    0b01100001, 0b10000000,
-    0b01100001, 0b10000000,
-    0b00110011, 0b00000000,
-    0b00110011, 0b00000000,
-    0b00011110, 0b00000000,
-    0b00011110, 0b00000000,
-    0b00001100, 0b00000000,
-    0b00001100, 0b00000000
 };
 const uint8_t Small_W[23] PROGMEM = { // ASCII dec:32 hex:20
     2, 10, // width in bytes, height in pixels

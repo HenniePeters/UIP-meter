@@ -69,7 +69,8 @@ void SPI_WriteByte( register uint8_t data ) {
 #endif
 }
 //-----------------------------------------------------------------------------
-/*
+/*  // write_data is no longer used by this sketch
+    // See: Send_FrameBuffer_To_LCD
     void write_data( register uint8_t data ) {
     SET_SS; // Select the chip, starting a 24-bit SPI transfer
     SPI_WriteByte( 0xFA ); // send data header
@@ -98,7 +99,7 @@ void Set_Graphics_Mode_Address( register uint8_t x_word, register uint8_t y ) {
 //-----------------------------------------------------------------------------
 void Init_LCD() {
     write_command( 0x30 ); // LCD_BASIC, set 8 bit operation and basic instruction set
-    write_command( 0x30 ); // repeat LCD_BASIC
+    write_command( 0x30 ); // repeat LCD_BASIC instruction, seen in several source, why!
     write_command( 0x01 ); // LCD_CLS
     _delay_ms( 2 );
     write_command( 0x06 ); // LCD_ADDRINC
@@ -121,41 +122,11 @@ void Fill_FrameBuffer( uint8_t fill_data ) {
 //-----------------------------------------------------------------------------
 void Send_FrameBuffer_To_LCD( void ) {
     register uint8_t i, j, b;
-    // Reducing the number of redundant writes by not repeating chip select and 0xFA
-    // for every byte. Doing that per pixel line instead.
-    //write_command( 0x34 );  // LCD_TXTMODE
-/*
-    write_command( 0x03 );  // LCD_SCROLL
-    write_command( 0x40+32 ); // LCD_SCROLLADDR
+    // Reducing the number of redundant writes by not repeating 0xFA for every 
+    // byte with write_data(). Doing that per pixel line instead. Also setting 
+    // and clearing the chipselect for every byte slows down the algoritm.
     for( j = 0; j < FRAME_HEIGHT_PIXELS; j++ ) {
-        Set_Graphics_Mode_Address( 0, j ); // Set Y address to this line, reset X address
-        SET_SS;
-        SPI_WriteByte( 0xFA ); // data
-        for( i = 0; i < FRAME_WIDTH_BYTES; i++ ) {
-            b = framebuffer[j][i];
-            SPI_WriteByte( b & 0xF0 );  
-            SPI_WriteByte( b << 4 );
-        }
-        CLR_SS;
-    }
-    write_command( 0x03 ); // LCD_SCROLL
-    write_command( 0x40 ); // LCD_SCROLLADDR    
-    for( j = FRAME_HEIGHT_PIXELS; j < (FRAME_HEIGHT_PIXELS<<1); j++ ) {
-        Set_Graphics_Mode_Address( 0, j+32 ); // Set Y address to this line, reset X address
-        SET_SS;
-        SPI_WriteByte( 0xFA ); // data
-        for( i = 0; i < FRAME_WIDTH_BYTES; i++ ) {
-            b = framebuffer[j][i];
-            SPI_WriteByte( b & 0xF0 );  
-            SPI_WriteByte( b << 4 );
-        }
-        CLR_SS;
-    }
-    //write_command( 0x36 );      // LCD_GFXMODE
-*/
-
-    for( j = 0; j < FRAME_HEIGHT_PIXELS; j++ ) {
-        Set_Graphics_Mode_Address( 0, j ); // Set Y address to this line, reset X address
+        Set_Graphics_Mode_Address( 0, j ); // Set Y address to line nr j, reset X address
         SET_SS;
         SPI_WriteByte( 0xFA ); // data
         for( i = 0; i < FRAME_WIDTH_BYTES; i++ ) {
@@ -189,18 +160,18 @@ void PrintLarge( uint8_t left_byte, uint8_t top_pixel, const char *text ) {
             for( i = 0; i < w; i++ ) {
                 register uint8_t *LCD_Memory_1 = &framebuffer[j + y][( x * 8 + i * 8 ) >> 3];
                 switch( c ) { // Print the character in framebuffer.
-                    case '.': b = pgm_read_byte( &LargeDot[   j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '0': b = pgm_read_byte( &Large_0[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '1': b = pgm_read_byte( &Large_1[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '2': b = pgm_read_byte( &Large_2[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '3': b = pgm_read_byte( &Large_3[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '4': b = pgm_read_byte( &Large_4[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '5': b = pgm_read_byte( &Large_5[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '6': b = pgm_read_byte( &Large_6[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '7': b = pgm_read_byte( &Large_7[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '8': b = pgm_read_byte( &Large_8[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '9': b = pgm_read_byte( &Large_9[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    default:  b = pgm_read_byte( &LargeSpace[ j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b;
+                    case '.': *LCD_Memory_1 = pgm_read_byte( &LargeDot[   j * w + i + 2 ] ); break;
+                    case '0': *LCD_Memory_1 = pgm_read_byte( &Large_0[    j * w + i + 2 ] ); break;
+                    case '1': *LCD_Memory_1 = pgm_read_byte( &Large_1[    j * w + i + 2 ] ); break;
+                    case '2': *LCD_Memory_1 = pgm_read_byte( &Large_2[    j * w + i + 2 ] ); break;
+                    case '3': *LCD_Memory_1 = pgm_read_byte( &Large_3[    j * w + i + 2 ] ); break;
+                    case '4': *LCD_Memory_1 = pgm_read_byte( &Large_4[    j * w + i + 2 ] ); break;
+                    case '5': *LCD_Memory_1 = pgm_read_byte( &Large_5[    j * w + i + 2 ] ); break;
+                    case '6': *LCD_Memory_1 = pgm_read_byte( &Large_6[    j * w + i + 2 ] ); break;
+                    case '7': *LCD_Memory_1 = pgm_read_byte( &Large_7[    j * w + i + 2 ] ); break;
+                    case '8': *LCD_Memory_1 = pgm_read_byte( &Large_8[    j * w + i + 2 ] ); break;
+                    case '9': *LCD_Memory_1 = pgm_read_byte( &Large_9[    j * w + i + 2 ] ); break;
+                    default:  *LCD_Memory_1 = pgm_read_byte( &LargeSpace[ j * w + i + 2 ] );
                 }
             }
         }
@@ -209,7 +180,7 @@ void PrintLarge( uint8_t left_byte, uint8_t top_pixel, const char *text ) {
 }
 //-----------------------------------------------------------------------------
 void PrintSmall( uint8_t left_byte, uint8_t top_pixel, const char *text ) {
-    register uint8_t b, c, i, j, w, h, y = top_pixel, x = left_byte;
+    register uint8_t c, i, j, w, h, y = top_pixel, x = left_byte;
     for( register uint8_t p = 0; p < strlen( text ); p++ ) {
         c = text[p];
         switch( c ) { // Read the dimensions of the character
@@ -224,10 +195,7 @@ void PrintSmall( uint8_t left_byte, uint8_t top_pixel, const char *text ) {
             case '7': w = pgm_read_byte( &Small_7[    0 ] ); h = pgm_read_byte( &Small_7[    1 ] ); break;
             case '8': w = pgm_read_byte( &Small_8[    0 ] ); h = pgm_read_byte( &Small_8[    1 ] ); break;
             case '9': w = pgm_read_byte( &Small_9[    0 ] ); h = pgm_read_byte( &Small_9[    1 ] ); break;
-            case 'A': w = pgm_read_byte( &Small_A[    0 ] ); h = pgm_read_byte( &Small_A[    1 ] ); break;
-            case 'V': w = pgm_read_byte( &Small_V[    0 ] ); h = pgm_read_byte( &Small_V[    1 ] ); break;
             case 'W': w = pgm_read_byte( &Small_W[    0 ] ); h = pgm_read_byte( &Small_W[    1 ] ); break;
-            case 'm': w = pgm_read_byte( &Small_m[    0 ] ); h = pgm_read_byte( &Small_m[    1 ] ); break;
             case '{': w = pgm_read_byte( &Caption_V[  0 ] ); h = pgm_read_byte( &Caption_V[  1 ] ); break;
             case '}': w = pgm_read_byte( &Caption_A[  0 ] ); h = pgm_read_byte( &Caption_A[  1 ] ); break;
             case '[': w = pgm_read_byte( &Caption_mA[ 0 ] ); h = pgm_read_byte( &Caption_mA[ 1 ] ); break;
@@ -239,27 +207,24 @@ void PrintSmall( uint8_t left_byte, uint8_t top_pixel, const char *text ) {
             for( i = 0; i < w; i++ ) {
                 register uint8_t *LCD_Memory_1 = &framebuffer[j + y][( x * 8 + i * 8 ) >> 3];
                 switch( c ) { // Print the character in framebuffer.
-                    case '.': b = pgm_read_byte( &SmallDot[    j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '0': b = pgm_read_byte( &Small_0[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '1': b = pgm_read_byte( &Small_1[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '2': b = pgm_read_byte( &Small_2[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '3': b = pgm_read_byte( &Small_3[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '4': b = pgm_read_byte( &Small_4[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '5': b = pgm_read_byte( &Small_5[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '6': b = pgm_read_byte( &Small_6[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '7': b = pgm_read_byte( &Small_7[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '8': b = pgm_read_byte( &Small_8[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '9': b = pgm_read_byte( &Small_9[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case 'A': b = pgm_read_byte( &Small_A[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case 'V': b = pgm_read_byte( &Small_V[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case 'W': b = pgm_read_byte( &Small_W[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case 'm': b = pgm_read_byte( &Small_m[     j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '{': b = pgm_read_byte( &Caption_V[   j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '}': b = pgm_read_byte( &Caption_A[   j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '[': b = pgm_read_byte( &Caption_mV[  j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case ']': b = pgm_read_byte( &Caption_mA[  j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    case '#': b = pgm_read_byte( &Caption_mW[  j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b; break;
-                    default:  b = pgm_read_byte( &SmallSpace [ j * w + i + 2 ] ); *LCD_Memory_1 &= b; *LCD_Memory_1 |= b;
+                    case '.': *LCD_Memory_1 = pgm_read_byte( &SmallDot[    j * w + i + 2 ] ); break;
+                    case '0': *LCD_Memory_1 = pgm_read_byte( &Small_0[     j * w + i + 2 ] ); break;
+                    case '1': *LCD_Memory_1 = pgm_read_byte( &Small_1[     j * w + i + 2 ] ); break;
+                    case '2': *LCD_Memory_1 = pgm_read_byte( &Small_2[     j * w + i + 2 ] ); break;
+                    case '3': *LCD_Memory_1 = pgm_read_byte( &Small_3[     j * w + i + 2 ] ); break;
+                    case '4': *LCD_Memory_1 = pgm_read_byte( &Small_4[     j * w + i + 2 ] ); break;
+                    case '5': *LCD_Memory_1 = pgm_read_byte( &Small_5[     j * w + i + 2 ] ); break;
+                    case '6': *LCD_Memory_1 = pgm_read_byte( &Small_6[     j * w + i + 2 ] ); break;
+                    case '7': *LCD_Memory_1 = pgm_read_byte( &Small_7[     j * w + i + 2 ] ); break;
+                    case '8': *LCD_Memory_1 = pgm_read_byte( &Small_8[     j * w + i + 2 ] ); break;
+                    case '9': *LCD_Memory_1 = pgm_read_byte( &Small_9[     j * w + i + 2 ] ); break;
+                    case 'W': *LCD_Memory_1 = pgm_read_byte( &Small_W[     j * w + i + 2 ] ); break;
+                    case '{': *LCD_Memory_1 = pgm_read_byte( &Caption_V[   j * w + i + 2 ] ); break;
+                    case '}': *LCD_Memory_1 = pgm_read_byte( &Caption_A[   j * w + i + 2 ] ); break;
+                    case '[': *LCD_Memory_1 = pgm_read_byte( &Caption_mV[  j * w + i + 2 ] ); break;
+                    case ']': *LCD_Memory_1 = pgm_read_byte( &Caption_mA[  j * w + i + 2 ] ); break;
+                    case '#': *LCD_Memory_1 = pgm_read_byte( &Caption_mW[  j * w + i + 2 ] ); break;
+                    default:  *LCD_Memory_1 = pgm_read_byte( &SmallSpace [ j * w + i + 2 ] );
                 }
             }
         }
