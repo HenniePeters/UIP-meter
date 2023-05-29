@@ -1,6 +1,6 @@
 # UIP-meter  
 Voltage, Current and Power meter.  
-A digital meter using Arduino Pro Mini and a CrystalFontz LCD display, with source code and schematic.  
+A digital meter using Arduino Pro Mini and a CrystalFontz ST7920 LCD display, with source code and schematic.  
   
 __<h2>This repository is a work in progress</h2>__  
 
